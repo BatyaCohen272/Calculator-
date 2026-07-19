@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Styled Calculator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #1e3a8a, #0f172a);
+      padding: 20px;
+    }
+
+    .calculator {
+      width: 100%;
+      max-width: 420px;
+      background: #111827;
+      color: white;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0 0 8px;
+      font-size: 26px;
+    }
+
+    .display {
+      background: #f8fafc;
+      color: #111827;
+      border-radius: 16px;
+      padding: 18px;
+      font-size: 28px;
+      text-align: right;
+      margin-bottom: 16px;
+      min-height: 70px;
+      overflow: hidden;
+    }
+
+    .input-box {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: none;
+      margin-bottom: 16px;
+      font-size: 18px;
+      outline: none;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 17px;
+      cursor: pointer;
+      background: #334155;
+      color: white;
+      transition: 0.2s ease;
+    }
+
+    button:hover {
+      background: #475569;
+      transform: translateY(-1px);
+    }
+
+    .operator {
+      background: #2563eb;
+    }
+
+    .operator:hover {
+      background: #1d4ed8;
+    }
+
+    .equal {
+      background: #10b981;
+      grid-column: span 2;
+    }
+
+    .equal:hover {
+      background: #059669;
+    }
+
+    .clear {
+      background: #ef4444;
+    }
+
+    .clear:hover {
+      background: #dc2626;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <h1>Styled Calculator</h1>
+    <div id="display" class="display">0</div>
+    <input id="input" class="input-box" type="number" placeholder="Enter a number" />
+
+    <div class="buttons">
+      <button class="operator" data-op="square">x²</button>
+      <button class="operator" data-op="sqrt">√x</button>
+      <button class="operator" data-op="factorial">!</button>
+      <button class="clear" id="clearBtn">C</button>
+
+      <button class="operator" data-op="add">+</button>
+      <button class="operator" data-op="subtract">−</button>
+      <button class="operator" data-op="multiply">×</button>
+      <button class="operator" data-op="divide">÷</button>
+
+      <button class="operator" data-op="power">xʸ</button>
+      <button class="operator" data-op="average">avg</button>
+      <button class="operator" data-op="googol">G</button>
+
+      <button class="operator" data-op="googolplex">GP</button>
+      <button class="operator" data-op="percent">%</button>
+      <button class="operator" data-op="negate">±</button>
+      <button class="equal" id="equalBtn">=</button>
+    </div>
+  </div>
+
+  <script>
+    const inputBox = document.getElementById('input');
+    const display = document.getElementById('display');
+    const clearBtn = document.getElementById('clearBtn');
+    const equalBtn = document.getElementById('equalBtn');
+
+    let currentValue = null;
+    let selectedOp = null;
+
+    function factorial(n) {
+      if (!Number.isInteger(n) || n < 0) return 'Invalid';
+      if (n === 0 || n === 1) return 1;
+      let total = 1;
+      for (let i = 2; i <= n; i++) total *= i;
+      return total;
+    }
+
+    function toSuperscript(text) {
+      const map = {
+        '0': '⁰',
+        '1': '¹',
+        '2': '²',
+        '3': '³',
+        '4': '⁴',
+        '5': '⁵',
+        '6': '⁶',
+        '7': '⁷',
+        '8': '⁸',
+        '9': '⁹',
+        '-': '⁻'
+      };
+
+      return String(text).split('').map((char) => map[char] || char).join('');
+    }
+
+    function formatDisplayValue(value) {
+      if (typeof value === 'string') return value;
+      if (typeof value !== 'number' || !Number.isFinite(value)) return String(value);
+
+      const text = value.toString();
+      const match = text.match(/^([+-]?)(\d+)(?:\.(\d+))?e([+-]?)(\d+)$/i);
+
+      if (match) {
+        const mantissa = match[2] + (match[3] ? `.${match[3]}` : '');
+        const exponentSign = match[4] === '-' ? '⁻' : '';
+
+        if (mantissa === '1') {
+          return `10${exponentSign}${toSuperscript(match[5])}`;
+        }
+
+        return `${mantissa} × 10${exponentSign}${toSuperscript(match[5])}`;
+      }
+
+      if (Number.isInteger(value)) {
+        return value.toLocaleString('en-US');
+      }
+
+      return value.toString();
+    }
+
+    function applyOperation(op) {
+      const value = Number(inputBox.value);
+      if (Number.isNaN(value)) return;
+
+      if (currentValue === null) {
+        currentValue = value;
+        selectedOp = op;
+        display.textContent = formatDisplayValue(value);
+        inputBox.value = '';
+        return;
+      }
+
+      let result;
+      switch (selectedOp) {
+        case 'add':
+          result = currentValue + value;
+          break;
+        case 'subtract':
+          result = currentValue - value;
+          break;
+        case 'multiply':
+          result = currentValue * value;
+          break;
+        case 'divide':
+          if (value === 0) {
+            result = 'Cannot divide by zero';
+          } else {
+            const quotient = currentValue / value;
+            const remainder = currentValue % value;
+            result = remainder === 0 ? quotient : `${quotient} R ${remainder}`;
+          }
+          break;
+        case 'power':
+          result = currentValue ** value;
+          break;
+        case 'average':
+          result = (currentValue + value) / 2;
+          break;
+        default:
+          result = value;
+      }
+
+      currentValue = result;
+      selectedOp = op;
+      display.textContent = formatDisplayValue(result);
+      inputBox.value = '';
+    }
+
+    function calculateSingle(op) {
+      const value = Number(inputBox.value);
+      if (Number.isNaN(value)) return;
+
+      let result;
+      switch (op) {
+        case 'square':
+          result = value * value;
+          break;
+        case 'sqrt':
+          result = value < 0 ? 'Invalid' : Math.sqrt(value);
+          break;
+        case 'factorial':
+          result = factorial(value);
+          break;
+        case 'googol':
+          result = 10 ** 100;
+          break;
+        case 'googolplex':
+          result = '10ᵍᵒᵒᵍᵒˡ';
+          break;
+        case 'negate':
+          result = -value;
+          break;
+        default:
+          result = value;
+      }
+
+      display.textContent = formatDisplayValue(result);
+      inputBox.value = '';
+    }
+
+    document.querySelectorAll('.operator').forEach((button) => {
+      button.addEventListener('click', () => {
+        const op = button.dataset.op;
+        if (['square', 'sqrt', 'factorial', 'googol', 'googolplex', 'negate'].includes(op)) {
+          calculateSingle(op);
+        } else {
+          applyOperation(op);
+        }
+      });
+    });
+
+    equalBtn.addEventListener('click', () => {
+      if (selectedOp === null || inputBox.value === '') return;
+      applyOperation(selectedOp);
+      selectedOp = null;
+    });
+
+    clearBtn.addEventListener('click', () => {
+      inputBox.value = '';
+      display.textContent = '0';
+      currentValue = null;
+      selectedOp = null;
+    });
+  </script>
+</body>
+</html>
